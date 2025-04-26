@@ -1,0 +1,39 @@
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Archivos de sistema
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración de VS Code
+.vscode/
+
+# Archivos de bases de datos o datos grandes
+*.db
+*.sqlite3
+
+# Archivos CSV locales
+*.csv
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+
+# Archivos de Python
+*.egg-info/
+dist/
+build/
+
+# Secretos o claves
+config.py
+.env
+
+# Otros
+.DS_Store
+Thumbs.db
+config.py

@@ -3,6 +3,7 @@ import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 from config import BOT_TOKEN
+from db import *
 import pytz
 
 
@@ -44,18 +45,37 @@ async def answer_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     user_answer = query.data
     right_answer = context.user_data.get('correct_answer')
+    user_id = update.effective_user.id
+
+    score_actual = await get_user_score(user_id)
+
+
     if user_answer == right_answer:
         await query.edit_message_text(text=f"✅ Correct!\nQuestion: {context.user_data.get('question_text')}\nThe answer is: {right_answer}")
+        score_actual += 1
+        
     else:
+        if score_actual > 0:
+            score_actual -= 1
         await query.edit_message_text(text=f"❌ Wrong!\nQuestion: {context.user_data.get('question_text')}\nThe answer is: {right_answer}")
 
+    await update_user_score(user_id, score_actual)
+        
+async def view_score(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    score_actual = await get_user_score(user_id)
+    await update.message.reply_text(f"🎯 Your current score is: {score_actual}")
+
 def main():
+    init_db()
+
     app = Application.builder().token(BOT_TOKEN).build()
 
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("question", question))
     app.add_handler(CommandHandler("answer", answer_button))
+    app.add_handler(CommandHandler("stats", view_score))
     app.add_handler(CallbackQueryHandler(answer_button))
 
     print("🤖 Bot Working. Ctrl+C to stop")

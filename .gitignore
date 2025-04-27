@@ -37,3 +37,4 @@ config.py
 .DS_Store
 Thumbs.db
 config.py
+*.db

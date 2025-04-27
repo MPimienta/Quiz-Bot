@@ -1,0 +1,1 @@
+-Actualmente el usuario puede pedir más de una pregunta sin haber respondido a la anterior. El problema está en que al responder una pregunta que no es la más reciente. El sistema solo tiene en cuenta la respuesta correcta actual, por lo que todas las opciones que marque de preguntas antiguas resultarán inválidas.

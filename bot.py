@@ -6,9 +6,9 @@ from config import BOT_TOKEN
 from db import *
 import pytz
 
-
 # Load questions from CSV file
 questions_df = pd.read_csv('questions.csv')
+
 
 # Function to start the bot and send a welcome message
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -67,6 +67,8 @@ async def view_score(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text(f"🎯 Your current score is: {score_actual}")
 
 def main():
+
+    # Load db
     init_db()
 
     app = Application.builder().token(BOT_TOKEN).build()
@@ -74,7 +76,6 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("question", question))
-    app.add_handler(CommandHandler("answer", answer_button))
     app.add_handler(CommandHandler("stats", view_score))
     app.add_handler(CallbackQueryHandler(answer_button))
 

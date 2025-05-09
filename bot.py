@@ -12,6 +12,7 @@ questions_df = pd.read_csv('questions.csv')
 
 # Function to start the bot and send a welcome message
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    context.user_data['active_questions'] = {}
     await update.message.reply_text(f"Welcome to the Quiz Bot, {update.effective_user.first_name}!\nType /question to start the quiz.")
 
 # Function to send a random question
@@ -20,11 +21,10 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Get the question text and answer
     question_text = random_question['question']
-    context.user_data['correct_answer'] = random_question['answer']
-    context.user_data['question_text'] = question_text
+    correct_answer = random_question['answer']
 
     options = [
-        random_question['answer'],
+        correct_answer,
         random_question['fake_answer_1'],
         random_question['fake_answer_2'],
         random_question['fake_answer_3']
@@ -37,29 +37,45 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(f"❓ {question_text}", reply_markup=reply_markup)
+    message = await update.message.reply_text(f"❓ {question_text}", reply_markup=reply_markup)
+
+    message_id = message.message_id
+    user_questions = context.user_data.setdefault("active_questions", {})
+    user_questions[message_id] = {
+        "question": question_text,
+        "correct_answer": correct_answer,
+    }
 
 async def answer_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
 
+    message_id = query.message.message_id
+    user_questions = context.user_data.get("active_questions", {})
+
+    question_data = user_questions.get(message_id)
+    if not question_data:
+        await query.edit_message_text("⚠️ This question has already been answered or is invalid.")
+        return
+    
     user_answer = query.data
-    right_answer = context.user_data.get('correct_answer')
+    correct_answer = question_data["correct_answer"]
     user_id = update.effective_user.id
 
     score_actual = await get_user_score(user_id)
 
-
-    if user_answer == right_answer:
-        await query.edit_message_text(text=f"✅ Correct!\nQuestion: {context.user_data.get('question_text')}\nThe answer is: {right_answer}")
+    if user_answer == correct_answer:
         score_actual += 1
-        
+        result_text = f"✅ Correct!\n\nQuestion: {question_data['question']}\nAnswer: {correct_answer}"
     else:
-        if score_actual > 0:
-            score_actual -= 1
-        await query.edit_message_text(text=f"❌ Wrong!\nQuestion: {context.user_data.get('question_text')}\nThe answer is: {right_answer}")
+        score_actual = max(0, score_actual - 1)
+        result_text = f"❌ Wrong!\n\nQuestion: {question_data['question']}\nAnswer: {correct_answer}"
 
     await update_user_score(user_id, score_actual)
+
+    user_questions.pop(message_id, None)
+
+    await query.edit_message_text(text=result_text)
         
 async def view_score(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id

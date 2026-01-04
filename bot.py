@@ -2,12 +2,22 @@ import pandas as pd
 import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
-from config import BOT_TOKEN
 from db import *
 import pytz
 import os
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
+# 1. Intentamos obtener el token de las Variables de Entorno (Render)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# 2. Si no existe (estamos en local y no configuramos env vars), leemos de config.py
+if not BOT_TOKEN:
+    try:
+        from config import BOT_TOKEN
+        print("⚠️ Usando token desde config.py (Modo Local)")
+    except ImportError:
+        print("❌ Error: No se encontró el TOKEN. Configura la Variable de Entorno o el archivo config.py")
 
 # Load questions from CSV file
 questions_df = pd.read_csv('questions.csv')

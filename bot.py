@@ -5,6 +5,9 @@ from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQuer
 from config import BOT_TOKEN
 from db import *
 import pytz
+import os
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Load questions from CSV file
 questions_df = pd.read_csv('questions.csv')
@@ -82,7 +85,25 @@ async def view_score(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     score_actual = await get_user_score(user_id)
     await update.message.reply_text(f"🎯 Your current score is: {score_actual}")
 
+# --- Servidor Web "Dummy" para Render ---
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Responder con estado 200 (OK) a cualquier petición
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive!")
+
+def start_dummy_server():
+    # Render nos asignará un puerto en la variable de entorno 'PORT'
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    print(f"🌍 Servidor dummy escuchando en el puerto {port}")
+    server.serve_forever()
+
 def main():
+
+    # Iniciar el servidor web en un hilo separado (daemon=True para que cierre al salir)
+    Thread(target=start_dummy_server, daemon=True).start()
 
     # Load db
     init_db()

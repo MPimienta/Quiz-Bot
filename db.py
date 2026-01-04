@@ -1,11 +1,11 @@
 import aiosqlite
 import sqlite3
-from config import DB_FILE
+#from config import DB_FILE
 
 DB_NAME = "scores.db"
 
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS score (
